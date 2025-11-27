@@ -1,68 +1,46 @@
 # SpecFlow Recorder Chrome Extension
 
-A Chrome Extension that records user interactions on web pages and generates SpecFlow feature files and C# step definitions for automated testing.
+A powerful Chrome Extension that records your browser interactions and automatically generates production-ready **SpecFlow (Gherkin)** feature files and **Selenium C#** step definitions.
 
-## Project Structure
+Features
 
-```
-SpecFlowRecorderExtension/
-├── manifest.json       # Extension configuration
-├── popup.html         # Extension UI
-├── popup.js           # UI logic
-├── background.js      # File generation & state management
-└── content.js         # Event capture & selector generation
-```
+- ** Record & Playback**: Captures clicks, typing, navigation, and special keys (Enter).
+- ** Smart Selectors**: Automatically finds the best, most robust selector.
+- ** Auto-Generation**: Instantly creates `.feature` and `.cs` files ready for your test project.
+- ** Robust Code**: Generates C# code with built-in `WebDriverWait` and hover handling for stability.
+- ** Session Management**: Persists recording state even if you close the popup or reload the page.
 
 ## Installation
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable **Developer mode** (toggle in top-right)
-3. Click **Load unpacked**
-4. Select the `SpecFlowRecorderExtension` folder
+1.  Clone this repository.
+2.  Open Chrome and navigate to `chrome://extensions/`.
+3.  Enable Developer mode (top right).
+4.  Click Load unpacked.
+5.  Select the `SpecFlowRecorderExtension` folder from this project.
 
-## Usage
+## Usage Guide
 
-1. Click the extension icon in your browser toolbar
-2. Enter a **Feature Name** (e.g., "LoginTest")
-3. Click **Start Recording**
-4. Interact with your web application (click, type, navigate)
-5. Click the extension icon again and click **Stop & Generate**
-6. Two files will download:
-   - `YourFeatureName.feature` - Gherkin feature file
-   - `YourFeatureNameSteps.cs` - C# step definitions
+1.  Click the extension icon, enter a Feature Name (e.g., `Login`), and hit 'Start Recording'.
+2.  Browse your website as a user would. The extension captures your actions in the background.
+3.  Click the extension icon again and hit 'Stop & Generate'.
+4.  Two files will automatically download:
+       `Login.feature`: The Gherkin scenarios.
+       `LoginSteps.cs`: The C# automation code.
+5.  Drop these files into your SpecFlow project and run your tests!
 
-## Generated Files
+## Running the Generated Tests
 
-The extension generates production-ready SpecFlow test files:
+A compatible SpecFlow test project template is available (if you moved it) or can be created with:
 
-- **Feature File**: Contains Gherkin scenarios with recorded actions
-- **Steps File**: Contains C# step definitions with Selenium WebDriver code
+```bash
+dotnet new specflow -n SpecFlowTests
+dotnet add package Selenium.WebDriver
+dotnet add package SpecFlow.Plus.LivingDocPlugin
+```
 
-## Features
+## Tech Stack
 
-- ✅ Smart selector generation (data attributes, IDs, XPath, CSS)
-- ✅ Automatic step deduplication
-- ✅ Support for clicks, typing, and navigation
-- ✅ Handles hidden checkboxes and radio buttons
-- ✅ Hover-aware element interaction
-- ✅ Contextual text-based selectors for list items
+- Frontend: HTML5, CSS3, Vanilla JavaScript
+- Extension API: Chrome Extensions Manifest V3
+- Automation: Selenium WebDriver, SpecFlow (Gherkin)
 
-## Test Project
-
-A separate SpecFlow test project is available at:
-`/Users/ram/Downloads/SpecFlowTestsProject/`
-
-This project can run the generated feature files using Selenium WebDriver and NUnit.
-
-## Development
-
-To update the extension after making changes:
-1. Go to `chrome://extensions/`
-2. Click the **Refresh** icon on the extension card
-3. Reload any web pages you want to record
-
-## Notes
-
-- The extension works on most websites except Chrome internal pages (chrome://, chrome-extension://)
-- Delete buttons and hover-only elements may require manual adjustment
-- Generated files use SpecFlow 3.9+ and Selenium WebDriver 4.x
