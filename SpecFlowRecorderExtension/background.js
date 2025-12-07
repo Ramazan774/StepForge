@@ -2,7 +2,6 @@ let isRecording = false;
 let currentFeatureName = 'MyFeature';
 let recordedActions = [];
 
-// Initialize storage
 chrome.storage.local.set({ isRecording: false, actionCount: 0 });
 
 console.log('SpecFlow Recorder Background Service Loaded');
@@ -22,7 +21,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs[0]) {
-                chrome.tabs.sendMessage(tabs[0].id, { command: 'start' });
+                chrome.tabs.sendMessage(tabs[0].id, { command: 'start' }).catch(err => {
+                    console.log('Could not send start message to tab:', err);
+                });
             }
         });
 
@@ -112,21 +113,39 @@ function generateFeatureFile(actions, featureName) {
     let content = `Feature: ${featureName}\n\n`;
     content += `  Scenario: Recorded Scenario\n`;
 
+    let previousKeyword = null;
+
     actions.forEach(action => {
+        let currentKeyword = null;
+        let stepText = '';
+
         switch (action.type) {
             case 'navigate':
-                content += `    Given I navigate to "${action.value}"\n`;
+                currentKeyword = 'Given';
+                stepText = `I navigate to "${action.value}"`;
+                break;
+            case 'hover':
+                currentKeyword = 'When';
+                stepText = `I hover over the element with ${action.selector} "${action.selectorValue}"`;
                 break;
             case 'click':
-                content += `    When I click the element with ${action.selector} "${action.selectorValue}"\n`;
+                currentKeyword = 'When';
+                stepText = `I click the element with ${action.selector} "${action.selectorValue}"`;
                 break;
             case 'type':
-                content += `    Then I type "${action.value}" into element with ${action.selector} "${action.selectorValue}"\n`;
+                currentKeyword = 'Then';
+                stepText = `I type "${action.value}" into element with ${action.selector} "${action.selectorValue}"`;
                 break;
             case 'enterkey':
-                content += `    Then I type "${action.value}" and press Enter in element with ${action.selector} "${action.selectorValue}"\n`;
+                currentKeyword = 'Then';
+                stepText = `I type "${action.value}" and press Enter in element with ${action.selector} "${action.selectorValue}"`;
                 break;
         }
+
+        const keyword = (currentKeyword === previousKeyword) ? 'And' : currentKeyword;
+        content += `    ${keyword} ${stepText}\n`;
+
+        previousKeyword = currentKeyword;
     });
 
     content += `    Then the page should be in the expected state\n`;
@@ -175,6 +194,26 @@ namespace SpecFlowTests.Steps
         }
 `;
                 signatures.add('NavigateToUrl');
+            }
+        }
+        else if (action.type === 'hover') {
+            if (!signatures.has('HoverOverElement')) {
+                content += `
+        [When(@"I hover over the element with (.*?) ""(.*?)""")]
+        public void HoverOverElement(string selectorType, string selectorValue)
+        {
+            var wait = new OpenQA.Selenium.Support.UI.WebDriverWait(_driver, TimeSpan.FromSeconds(10));
+            var element = wait.Until(d => {
+                var el = GetElement(selectorType, selectorValue);
+                return (el != null && el.Displayed) ? el : null;
+            });
+
+            var actions = new OpenQA.Selenium.Interactions.Actions(_driver);
+            actions.MoveToElement(element).Perform();
+            Thread.Sleep(500); // Wait for dropdown/menu to appear
+        }
+`;
+                signatures.add('HoverOverElement');
             }
         }
         else if (action.type === 'click') {
